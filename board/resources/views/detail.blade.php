@@ -7,6 +7,11 @@
     <title>Detail</title>
 </head>
 <body>
+    <form action="{{route('boards.destroy', ['board' => $data->id])}}" method="post"> 
+    {{-- 문자열 안에 홑따옴표 '' 넣지마라 같이 문자로 인식해서 404 Error 남 --}}
+    @csrf
+    @method('delete')
+    <button type="submit">삭제</button>
     <div>
         글번호: {{$data->id}}
         <br>

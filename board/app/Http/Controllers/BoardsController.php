@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\DB; // 파사드에 있는 db 객체임 모델 객체가 아님 orm이 아님 
+
 use App\Models\Boards;
+
+
 
 class BoardsController extends Controller
 {
@@ -49,6 +53,7 @@ class BoardsController extends Controller
         // 이러면 인서트가 끝남 작성완료 되면 리스트페이지로 넘어가도록 하기
         return redirect('/boards'); // boards.index가 라우트 이름
         // 옐로퀀트가 업데이트랑 작성 다 알아서 해줌
+        // 인서트기 때문에 new를 작성해주는 것임
     }
 
     /**
@@ -59,7 +64,7 @@ class BoardsController extends Controller
      */
     public function show($id)
     {
-        $boards = Boards::find($id);
+        $boards = Boards::find($id);  // 에러나면 false 처리 
 
         // 해당하는 레코드 아이디 정보를 계속 불러와줌 엘로퀀트의 핵심임
         // 엘로퀀트 모델로 값 불러오기 $boards = Boards::......
@@ -71,7 +76,7 @@ class BoardsController extends Controller
         // 기존 값을 가져오고 hits로 업데이트 내용을 작성하고 save를 하면 해당 내용이 업데이트가 된다
 
         // 단순히 화면 보여주는 거라서 바로 리턴해주는 것임
-        return view('detail')->with('data', Boards::findOrfail($id));
+        return view('detail')->with('data', Boards::findOrfail($id)); // 예외처리를 해버림 404 error
     }
     // with를 이용해 바로 쏴준다 변수에 담아서 하기에는 비효율
 
@@ -86,9 +91,12 @@ class BoardsController extends Controller
      */
     public function edit($id)
     {
-        //
+        $boards = Boards::find($id); // 셀렉트로 이미 데이터 가져왔기 때문에 필요 없음
+        return view('edit')->with('data', $boards);
+    // save는 인서트할 때 인서트가 실패하면 업데이트를 한다고 함 같이 되어있다고 함      
     }
-        
+    // show랑 edit랑 한 클래스 안이지만 각각 달라서 'data'를 중복으로 사용해도 됨
+
     /**
      * Update the specified resource in storage.
      *
@@ -96,11 +104,71 @@ class BoardsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+
+
     public function update(Request $request, $id)
     {
-        //
+       $result = Boards::find($id);
+       $result->title = $request->title;
+       $result->content = $request->content;
+       $result->save();  
+       
+       return redirect()->route('boards.show', ['board' => $id]);
     }
+       // 쇼에서 수정 버튼 누르면 edit 수정페이지 -> edit는 데이터베이스에서 검색하고 edit 화면에다가 뷰로 바로 보여줌 내가 갖고 있는 페이지기 때문에
+       // 수정 완료 버튼은 업데이트를 누름 수정 처리를 하고 자기 자신의 페이지가 없음 그래서 detail로 가는데 업데이트와 주소가 다르기 때문에 리다이렉트를 한 것임
+       // 요청이 온 url은 업데이트 최종적으로는 show의 뷰를 보여줘야 함 그래서 redirect 해줘야 함 
+       // list랑 index는 똑같은 애들이니 그냥 show를 설정함 리다이렉트 안 하고 
 
+
+       // show는 페이지를 그냥 보여주는 것 
+       // update는 수정 기능 자기페이지 가지고 있지 않음 그래서 리다이렉트 다른 페이지를 보여주는 것이기 때문임
+
+
+    //  return redirect('/boards/'.$id);
+    // ->with('data', Boards::findOrFail($id));
+    // ->with('data', Boards::findOrFail($id));
+
+    // 세그먼트 파라미터 보드라는 값이 있음 쇼에 보드의 아이디를 세팅 
+    // api는 무조건 메소드로 구분 get이면 단순 검색 post면 새로운 데이터 입력 put 기존 데이터에다가 입력 delete는 삭제
+    // URL이 바뀌면 무조건 리다이렉트 해줘야 함
+    // return view('detail')->with('data', Boards::findOrFail($id));
+    // 리다이렉트가 필요한 시점에서는 리다이렉트를 해줘야 함 
+
+    // 업데이트 작업이 완료되고 데이터베이스에서 다시 가져와야 함
+    // 데이터베이스에서 문제 없이 처리 완료되고 커밋 됐을 때
+    //   $boards = Boards::find($id);
+   
+    // 내가 가지고 있는 처리 페이지가 있으면 그냥 뷰로 show로 표현
+
+        // :: 는 쿼리빌더 모댈겍체를 써야지 ORM 
+        // DB::table('Boards')->where('id','=',$id)->update([
+        //     'title' => $request->title
+        //     ,'content' => $request->content
+        // ]); // 단순히 쿼리빌드로 데이터베이스에 질의함
+    
+    // $boards = Boards::find($id); // 객체를 이용한 ORM 
+
+    // return view('detail')->with('data',$boards);
+   
+        
+
+    // orm과 쿼리 빌드 차이 객체를 사용했냐 안 했냐 차이
+    // boards
+
+
+        // $boards = Request::find(1);
+
+        // $boards->name = "수정됨";
+
+        // $boards->save();
+
+        // return \redirect('/boards');
+       
+   
+    // 데이터베이스를 갱신하면 그 데이터 값을 다시 받아와야 한다 update할 때 주의
+    // request를 이용해서 값을 받아들이고 다시 셀렉해서 가져오고 그걸 리스폰스
+    // 수정페이지에서 값을 받아오고 값을 수정을 해서 상세페이지로
     /**
      * Remove the specified resource from storage.
      *
@@ -109,6 +177,32 @@ class BoardsController extends Controller
      */
     public function destroy($id)
     {
-        //
+
+        $board = Boards::find($id)->delete(); // orm을 쓰면 소프트딜리트 기능을 사용 가능
+        return redirect('/boards');
+        
+        // 앞에 메소드(get, post, put, delete 등등)로 구분한다
+        // destroy update show url이 셋 다 같음 boards/3
+        // url이 달랐으면 에러가 났을 것임
+
+        // 넘어오는 값을 판별해서 에러처리 해줘야 함
+        // 엘로퀀트 모델을 사용 중임
+        // 잘못하면 다 삭제 됨
+        // id 바로 삭제하면 되면 destory로 바로 실행해도 무방함
+        // 딜리트는 객체를 먼저 만들고 체이닝 함
+        // transaction 꼭 해줘야 함 rollback 처리
+        // $board->delete();
+
+        // DB::update()를 해줘야 함 얘는 소프트 딜리트가 안 됨
+        // 엘로퀀트를 안 쓰면 소프트 딜리트가 안 됨
+        // 바로 레코드가 지워지게 됨
+
+        // Boards::destroy('id', $id)->delete();
+        // return rdirect('/boards');
     }
 }
+
+// url  | index | show   |edit |update
+// view | list  | detail |edit | X
+
+// response 요청 받은 url과 되돌려줘야 하는 url이 다를 때는 리다이렉트 해줘야 함
