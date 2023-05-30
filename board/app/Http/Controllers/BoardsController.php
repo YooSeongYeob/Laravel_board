@@ -1,13 +1,26 @@
 <?php
-
+//------------------------------------------------------------------
+// 최상단에 이력을 남긴다 프로젝트의 리더의 의견에 따라 달라짐
+// 선생님이 현업에 있을 때 이 양식으로 썼다고 함 
+// 프로젝트명 : laravel_board
+// 디렉터리   : controllers
+// 파일명     : BoardController.php
+// 이력       : v001 0526 SY.Yoo new 
+//              v002 0530 SY.Yoo 유효성 체크 추가 
+//------------------------------------------------------------------
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+
+use Illuminate\Support\Facades\validator;
 
 use Illuminate\Support\Facades\DB; // 파사드에 있는 db 객체임 모델 객체가 아님 orm이 아님 
 
 use App\Models\Boards;
 
+
+// 라라벨이 완전히 다 대체해주는 프레임워크가 아니기 때문에 
+// PHP 정규식을 작성해줘야 할 때가 있음
 
 
 class BoardsController extends Controller
@@ -34,8 +47,13 @@ class BoardsController extends Controller
      */
     public function create()
     {
-        return view('write');
+        // v002 update start
+        // return view('index') 기존의 소스코드를 파악하기 위해 지우지 않고 남겨둬야 함 언제 수정됐는지 번호로 수정함
+        return view('write'); // v002 add (추가면 이렇게) new면 그냥 v002 대부분의 현장에서 이런 식으로 적용 중 기존 소스코드는 무조건 남겨둬야 함
+        // v002 update end 2차 3차 프로젝트 때 필수기재 
+        // 소스코드 만들고 리뷰를 하는 시점에서 버전 1이 끝이고 문제가 생겨 수정을 하면 버전2임 그렇게 계속 반복임
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -43,8 +61,19 @@ class BoardsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $req)
+    public function store(Request $req) // 새로운 게시글을 인서트 해주는 메소드임
     {
+            // v002 add start
+            // (이력 남기기)
+        $req->validate([
+            'title' => 'required|between:3,30' // 라라벨에서 제공해주는 유효성 체크 방법 사용
+            ,'content' => 'required|max:1000'
+        ]); // 유저한테 받은 값을 배열로 넣어줘야 함 타이틀이랑 컨텐트
+            // min max와 between으로 설정 가능
+            // v002 add end
+            // validate로 배열 작성하면 작성 내용을 비우고 작성하기 버튼을 누르면 작성 완료가 되지 않음
+
+
         $boards = new Boards([
             'title' => $req->input('title')
             ,'content' => $req->input('content')
@@ -97,6 +126,7 @@ class BoardsController extends Controller
     }
     // show랑 edit랑 한 클래스 안이지만 각각 달라서 'data'를 중복으로 사용해도 됨
 
+
     /**
      * Update the specified resource in storage.
      *
@@ -108,13 +138,101 @@ class BoardsController extends Controller
 
     public function update(Request $request, $id)
     {
-       $result = Boards::find($id);
-       $result->title = $request->title;
-       $result->content = $request->content;
-       $result->save();  
+
+        // id는 url에 있어서 리퀘스트만 체크하면 출력이 안 됨 아이디가
+        // 리퀘스트 안에 아이디를 넣어야 함
+        // 아이디 배열 생성하고
+        // 리퀘스트 머지 생성하고 어레이를 머지시킴
+        // 그리고 리퀘스트를 실행해보면 아이디가 포함되어 있는 걸 볼 수가 있음
+        
+        // *** v002 add start ***
+        // ID를 리퀘스트 객체에 머지시킴 ('합치다' 라는 의미)
+        $arr = ['id' => $id];
+        $request->merge($arr); // = $request->request->add(arr); 속도는 후자로 하는 게 더 빠를 수도 있음
+        // *** v002 add end ***
+        // return var_dump($request);
+
+        // 먼저 자바스크립트에서 요청하고 서버에서도 확인해준다
+
+
+        // 유효성 검사 방법 1
+        /*
+        $request->validate([
+            'id'       => 'required|interger' // v002 add
+            ,'title'   => 'required|between:3,30'
+            ,'content' => 'required|max:1000' 
+        ]);
+        */
+
+        // 유효성 검사 방법 2   
+        
+        /*
+        $validator = validator::make(
+            $request->only('id', 'title', 'content')
+            ,[
+            'id'       => 'required|interger' 
+            ,'title'   => 'required|between:3,30'
+            ,'content' => 'required|max:1000' 
+            ]
+        );
+     
+        if($validator->fails()) {
+            return redirect()
+                    ->back()
+                    ->withErrors($validator)
+                    ->withInput();
+        }
+
+
+        // 컨트롤 스페이스랑 컨트롤 이용하기
+        // 세션에 있는 것을 가져오는 것이 old 메소드의 역할
+        */
+        
+        // 넘릭은 완전한 정수만
+        // 인테저는 데이터 타입 안 맞아도 괜찮다고 함
+        
+
+        $rules = [
+            'title' => 'required|between:3,255',
+            'content' => 'required',
+        ];
+        
+        // 유효성 검사 수행
+        $messages = [
+            'title.required' => '제목은 필수 항목입니다.',
+            'title.between' => '제목은 3자에서 255자 사이여야 합니다.',
+            'content.required' => '내용은 필수 항목입니다.',
+        ];
+        $request->validate($rules, $messages);
+    
+        // 검증이 성공한 경우에만 코드 실행
+        $result = Boards::find($id);
+        $result->title = $request['title'];
+        $result->content = $request['content'];
+        $result->save();
+        
+        return redirect()->route('boards.show', ['board' => $id]);
+        }
+             
+        
+    //    $arr = ['id' => $id];
+    //    $req = new Request($arr);
+
+    // 악성유저들 때문에 유효성 검사 꼭 해야 함 값이 이상하게 아무렇게나 들어갈 수가 있음
        
-       return redirect()->route('boards.show', ['board' => $id]);
-    }
+    // DB::table('Boards')->where('id','=',$id)->update([
+    //       'title' => $request->title  
+    //      ,'content' => $request->content 
+    // ]);
+
+    //    $result = Boards::find($id);
+    //    $result->title = $request->title;
+    //    $result->content = $request->content;
+    //    $result->save();  
+
+    //  return redirect('/boards/'.$id);
+    //  return redirect()->route('boards.update', ['board' => $id]);
+    
        // 쇼에서 수정 버튼 누르면 edit 수정페이지 -> edit는 데이터베이스에서 검색하고 edit 화면에다가 뷰로 바로 보여줌 내가 갖고 있는 페이지기 때문에
        // 수정 완료 버튼은 업데이트를 누름 수정 처리를 하고 자기 자신의 페이지가 없음 그래서 detail로 가는데 업데이트와 주소가 다르기 때문에 리다이렉트를 한 것임
        // 요청이 온 url은 업데이트 최종적으로는 show의 뷰를 보여줘야 함 그래서 redirect 해줘야 함 
@@ -124,8 +242,6 @@ class BoardsController extends Controller
        // show는 페이지를 그냥 보여주는 것 
        // update는 수정 기능 자기페이지 가지고 있지 않음 그래서 리다이렉트 다른 페이지를 보여주는 것이기 때문임
 
-
-    //  return redirect('/boards/'.$id);
     // ->with('data', Boards::findOrFail($id));
     // ->with('data', Boards::findOrFail($id));
 
@@ -204,5 +320,4 @@ class BoardsController extends Controller
 
 // url  | index | show   |edit |update
 // view | list  | detail |edit | X
-
 // response 요청 받은 url과 되돌려줘야 하는 url이 다를 때는 리다이렉트 해줘야 함
