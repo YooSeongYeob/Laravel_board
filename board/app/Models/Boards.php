@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Boards extends Model
 {
     use HasFactory, SoftDeletes;
-   
-    protected $guarded = ['id','created_at'];
+
+    protected $guarded = ['id', 'created_at'];
 
     protected $dates = ['deleted_at'];
 }
