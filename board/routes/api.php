@@ -24,3 +24,8 @@ Route::get('/list/{id}', [ApiListController::class, 'getlist']);
 
 Route::post('/list', [ApiListController::class, 'postlist']);
 
+Route::put('/list/{id}', [ApiListController::class, 'putlist']);
+Route::delete('/list/{id}', [ApiListController::class, 'deletelist']);
+
+// id는 세그먼트로 받겠다는 말
+// form으로 다같이 받는 방법도 있음
