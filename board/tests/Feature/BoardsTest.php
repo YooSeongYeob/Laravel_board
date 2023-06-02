@@ -108,6 +108,7 @@ class BoardsTest extends TestCase
 // 안 써도 된다 함 
 // 그럼 이거 말고 대신 사용할 수 있는 게 무엇일까?
 
+// 로깅, 설정(한글화)
 
 // crud 중에 지금 이건 r만 한거라고 함 boardsController에 내용이 많음
 // 게임 업계에서는 자동화 테스트로 확인한다고 함 
@@ -131,3 +132,6 @@ class BoardsTest extends TestCase
 // php artisan test
 
 // 라라벨 431p~ 477p 난이도 어렵고 이해 안 된다고 함 지금은
+
+// 로그를 파일에 저장하거나 데이터베이스에 저장을 함
+// 파일에 저장하기도 하는데 라라벨은 파일에 저장함 

@@ -13,14 +13,34 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
     function login() {
+
+        $arr['key']='test';
+        $arr['kim']='park';
+        Log::emergency('emergency', $arr);
+        Log::alert('alert', $arr);
+        Log::critical('critical', $arr);
+        Log::error('error', $arr);
+        Log::warning('warning', $arr);
+        Log::notice('notice', $arr);
+        Log::info('info', $arr);
+        Log::debug('debug', $arr);
+
+        // 보통은 에러랑 크리티컬을 씀
+        // 이멀전시는 서버 자체가 죽는다고 함
+
         return view('login');
     }
 
     function loginpost(Request $req) {
+
+        // Log::debug('유효성 ok'); 특정 값을 확인할 때만 쓴다고 하심
+        // log::debug($req->password. ' : '. .....) 이런 식으로 만듬
+
         //유효성 체크
         $req->validate([
             'email'    => 'required|email|max:100'
@@ -145,4 +165,18 @@ class UserController extends Controller
 
         return redirect()->route('users.edit');
     }
+
+    // with 메소드, 뷰랑 리다이렉트일 때 차이
+    // redirect에 with 작성하면 세션에 저장해서 사용하고
+    // view에 with를 작성하면 
+    // with는 기본적으로 세션에 등록함 뷰에 가면 with가 뷰에 체이닝하면 뷰에 등록함
+    // intended 그냥 리다이렉트 안에 넣으라고 하심 메소드 원래 접속하게 하려는 url에 접속하게 해주고 설정된 페이지가 없다면 다른 페이지로 넘어가게 하는거라고 함 
+    // 토큰 / 보통 유저가 검증하는 작업을 할 때 사용함 블레이드 템플릿에 csrf도 자동으로 통신 되는 애임 유저 쿠키에 저장하고 우리 웹서버에도 저장함 
+    // 토큰은 검증 작업 // 세션을 인증으로 브라우저에서는 사용할 수 있는데 문제가 있음 모바일은 쿠키가 없음 세션 인증 불가능임 그래서 나온게 jwt 토큰을 통해서 인증하게 됨
+    // 메일 << 숙제
+
+
+    // 쿼리빌더로 한다고 함 + sql
+    // 엘로퀀트는 다음에 할 듯
+    // 체이닝 없이 해야할 듯 
 }
